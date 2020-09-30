@@ -23,6 +23,7 @@ use Apigee\Edge\HttpClient\Plugin\Authentication\Oauth;
 use Drupal\apigee_edge\Plugin\EdgeKeyTypeInterface;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\key\Plugin\KeyInputBase;
 
 /**
@@ -55,6 +56,28 @@ class ApigeeAuthKeyInput extends KeyInputBase {
       ':input[name="key_input_settings[instance_type]"]' => ['value' => EdgeKeyTypeInterface::INSTANCE_TYPE_HYBRID],
     ];
 
+    $form['config_warning'] = [
+      '#type' => 'fieldset',
+      '#attributes' => ['class'=>['fieldgroup']],
+      '#states' => [
+        'visible' => [
+          ':input[name="key_input_settings[auth_type]"]' => ['value' => EdgeKeyTypeInterface::EDGE_AUTH_TYPE_BASIC],
+        ],
+      '#weight' => -100,
+      ],
+    $form['config_warning']['auth_type_help'] = [
+      '#type' => 'markup',
+      '#theme' => 'status_messages',
+      '#message_list' => [
+        MessengerInterface::TYPE_WARNING => [
+          $this->t('In the future, Apigee will deprecate Basic Authentication as a means of authenticating to the Edge server. <a href=":url" target="_blank">Learn more</a>.', [
+            ':url' => 'https://docs.apigee.com/api-platform/system-administration/basic-auth#warning',
+          ]),
+        ],
+      ],
+      ],
+    ];
+
     $form['instance_type'] = [
       '#type' => 'radios',
       '#title' => $this->t('Apigee instance type'),
@@ -78,7 +101,7 @@ class ApigeeAuthKeyInput extends KeyInputBase {
         EdgeKeyTypeInterface::EDGE_AUTH_TYPE_OAUTH => $this->t('OAuth'),
         EdgeKeyTypeInterface::EDGE_AUTH_TYPE_BASIC => $this->t('HTTP basic'),
       ],
-      '#default_value' => $values['auth_type'] ?? EdgeKeyTypeInterface::EDGE_AUTH_TYPE_BASIC,
+      '#default_value' => $values['auth_type'] ?? EdgeKeyTypeInterface::EDGE_AUTH_TYPE_OAUTH,
       '#states' => [
         'visible' => [$state_for_public, $state_for_private],
         'required' => [$state_for_public, $state_for_private],
